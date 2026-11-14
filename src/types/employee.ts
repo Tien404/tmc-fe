@@ -5,7 +5,7 @@ export type Employee = {
   active: boolean
 }
 
-export type GeneratedQR = {
+export type QRCodeData = {
   token: string
   expiresAt: string
 }

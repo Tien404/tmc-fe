@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { api } from '../services/api'
 
-import type { Employee, GeneratedQR } from '../types/employee'
+import type { Employee, QRCodeData } from '../types/employee'
 
 export function EmployeeQrPage({
   employee,
@@ -13,7 +13,7 @@ export function EmployeeQrPage({
   employee: Employee
   onSignOut: () => void
 }) {
-  const [qr, setQr] = useState<GeneratedQR | null>(null)
+  const [qr, setQr] = useState<QRCodeData | null>(null)
   const [image, setImage] = useState('')
   const [error, setError] = useState('')
   const [loadFailed, setLoadFailed] = useState(false)
@@ -24,7 +24,7 @@ export function EmployeeQrPage({
     let cancelled = false
     async function generate() {
       try {
-        const result = await api<GeneratedQR>(
+        const result = await api<QRCodeData>(
           `/identity/api/employees/${employee.id}/qr`,
           {},
         )

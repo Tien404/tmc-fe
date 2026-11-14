@@ -1,4 +1,4 @@
-export type CheckinEvent = {
+export type GateEvent = {
   id: string
   employeeId: number | null
   employeeName: string | null

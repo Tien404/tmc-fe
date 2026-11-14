@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../services/api'
-import type { CheckinEvent } from '../types/checkin'
+import type { GateEvent } from '../types/checkin'
 import { Button } from '../components/ui/Button'
 import { toast } from 'react-toastify'
 import { JournalTable } from '../components/kiosk/JournalTable'
@@ -10,11 +10,11 @@ export function KioskPage() {
   const [direction, setDirection] = useState('IN')
   const [scanning, setScanning] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [result, setResult] = useState<CheckinEvent | null>(null)
+  const [result, setResult] = useState<GateEvent | null>(null)
   const [error, setError] = useState('')
   const submitting = useRef(false)
 
-  const [events, setEvents] = useState<CheckinEvent[]>([])
+  const [events, setEvents] = useState<GateEvent[]>([])
   const [journalError, setJournalError] = useState('')
   const [token, setToken] = useState('')
 
@@ -22,7 +22,7 @@ export function KioskPage() {
 
   const loadEvents = useCallback(() => {
     const request = ++journalRequest.current
-    return api<CheckinEvent[]>('/checkin/api/events').then(
+    return api<GateEvent[]>('/checkin/api/events').then(
       (entries) => {
         if (request !== journalRequest.current) return
         setEvents(entries)
@@ -51,7 +51,7 @@ export function KioskPage() {
       setError('')
       try {
         setResult(
-          await api<CheckinEvent>('/checkin/api/checkins', {
+          await api<GateEvent>('/checkin/api/checkins', {
             token: value.trim(),
             direction,
           }),

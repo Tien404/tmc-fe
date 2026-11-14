@@ -1,8 +1,8 @@
-import type { CheckinEvent } from '../../types/checkin'
+import type { GateEvent } from '../../types/checkin'
 import { Button } from '../ui/Button'
 
 type JournalTableProps = {
-  events: CheckinEvent[]
+  events: GateEvent[]
   error?: string
   onRefresh: () => void
 }
