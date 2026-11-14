@@ -3,14 +3,17 @@ import { Button } from '../ui/Button'
 
 type JournalTableProps = {
   events: CheckinEvent[]
+  error?: string
   onRefresh: () => void
 }
 
-export function JournalTable({ events, onRefresh }: JournalTableProps) {
+export function JournalTable({ events, error, onRefresh }: JournalTableProps) {
   return (
-    <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+    <section className="panel journal-panel">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Local journal</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Recent gate activity</h2>
+        </div>
         <Button variant="secondary" onClick={onRefresh}>
           Refresh
         </Button>
@@ -54,7 +57,16 @@ export function JournalTable({ events, onRefresh }: JournalTableProps) {
           </tbody>
         </table>
       </div>
-      {!events.length && <p className="mt-4 text-slate-500">No scans yet.</p>}
+      {error && (
+        <p className="mt-4 text-red-700" role="alert">
+          {error}
+        </p>
+      )}
+      {!error && !events.length && (
+        <p className="mt-4 text-slate-500">
+          No scans yet. Your next check-in will appear here.
+        </p>
+      )}
     </section>
   )
 }
