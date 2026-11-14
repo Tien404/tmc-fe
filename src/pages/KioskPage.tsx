@@ -78,9 +78,8 @@ export function KioskPage() {
     [checkIn],
   )
 
-  const onCameraError = useCallback(() => {
+  const onCameraError = useCallback((detail: string) => {
     setScanning(false)
-    const detail = 'Camera unavailable. Check camera permissions and try again.'
     setError(detail)
     toast.error(detail, { toastId: detail })
   }, [])
