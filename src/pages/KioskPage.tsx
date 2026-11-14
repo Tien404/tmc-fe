@@ -1,3 +1,4 @@
+import { ManualCheckInForm } from '../components/kiosk/ManualCheckInForm'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../services/api'
 import type { GateEvent } from '../types/checkin'
@@ -180,6 +181,7 @@ export function KioskPage() {
               </p>
             </div>
           )}
+          <ManualCheckInForm onRecorded={() => void loadEvents()} />
         </section>
         <JournalTable
           events={events}

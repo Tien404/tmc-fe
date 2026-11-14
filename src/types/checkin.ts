@@ -7,5 +7,8 @@ export type GateEvent = {
   direction: string
   status: string
   message: string
+  source?: string
+  guardId?: string | null
+  reason?: string | null
   occurredAt: string
 }

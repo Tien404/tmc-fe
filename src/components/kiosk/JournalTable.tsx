@@ -50,7 +50,9 @@ export function JournalTable({ events, error, onRefresh }: JournalTableProps) {
                   {event.status}
                 </td>
                 <td className="border-b border-slate-200 px-3 py-3">
-                  {event.message}
+                  {event.source === 'MANUAL_OVERRIDE'
+                    ? 'Manual override'
+                    : event.message}
                 </td>
               </tr>
             ))}
