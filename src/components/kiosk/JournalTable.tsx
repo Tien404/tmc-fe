@@ -1,5 +1,6 @@
 import type { GateEvent } from '../../types/checkin'
 import { Button } from '../ui/Button'
+import { Check, RefreshCw, X } from 'lucide-react'
 
 type JournalTableProps = {
   events: GateEvent[]
@@ -12,15 +13,23 @@ export function JournalTable({ events, error, onRefresh }: JournalTableProps) {
     <section className="panel journal-panel">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">Recent gate activity</h2>
+          <h2 id="gate-activity-heading" className="text-xl font-semibold">
+            Recent gate activity
+          </h2>
         </div>
-        <Button variant="secondary" onClick={onRefresh}>
+        <Button className="gap-2" variant="secondary" onClick={onRefresh}>
+          <RefreshCw aria-hidden="true" className="size-4 shrink-0" />
           Refresh
         </Button>
       </div>
-      <div className="mt-5 overflow-x-auto">
+      <div
+        className="mt-5 max-h-[min(28rem,55dvh)] overflow-auto focus-visible:outline-2 focus-visible:outline-emerald-700"
+        role="region"
+        aria-labelledby="gate-activity-heading"
+        tabIndex={0}
+      >
         <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600">
+          <thead className="sticky top-0 z-10 text-slate-600">
             <tr>
               {['Time', 'Employee', 'Direction', 'Result', 'Message'].map(
                 (label) => (
@@ -47,7 +56,23 @@ export function JournalTable({ events, error, onRefresh }: JournalTableProps) {
                   {event.direction === 'IN' ? 'Entry' : 'Exit'}
                 </td>
                 <td className="border-b border-slate-200 px-3 py-3">
-                  {event.status}
+                  <span
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      event.status === 'OPENED'
+                        ? 'bg-emerald-100 text-emerald-900'
+                        : event.status === 'DENIED'
+                          ? 'bg-red-100 text-red-900'
+                          : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {event.status === 'OPENED' && (
+                      <Check aria-hidden="true" className="size-3.5 shrink-0" />
+                    )}
+                    {event.status === 'DENIED' && (
+                      <X aria-hidden="true" className="size-3.5 shrink-0" />
+                    )}
+                    {event.status}
+                  </span>
                 </td>
                 <td className="border-b border-slate-200 px-3 py-3">
                   {event.source === 'MANUAL_OVERRIDE'

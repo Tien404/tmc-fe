@@ -1,12 +1,18 @@
-import { useState } from 'react'
+import { DirectionPicker } from './DirectionPicker'
 import { toast } from 'react-toastify'
 import { api } from '../../services/api'
 import type { GateEvent } from '../../types/checkin'
 import { Button } from '../ui/Button'
 
-export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
-  const [busy, setBusy] = useState(false)
-
+export function ManualCheckInForm({
+  busy,
+  onBusyChange,
+  onRecorded,
+}: {
+  busy: boolean
+  onBusyChange: (busy: boolean) => void
+  onRecorded: () => void
+}) {
   async function submit(form: HTMLFormElement) {
     const data = new FormData(form)
     const payload = Object.fromEntries(data)
@@ -14,7 +20,7 @@ export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
       'input[name="passcode"]',
     )
     if (passcodeInput) passcodeInput.value = ''
-    setBusy(true)
+    onBusyChange(true)
     try {
       await api<GateEvent>('/checkin/api/manual-checkins', {
         ...payload,
@@ -27,16 +33,14 @@ export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
         error instanceof Error ? error.message : 'Manual operation failed.',
       )
     } finally {
-      setBusy(false)
+      onBusyChange(false)
       onRecorded()
     }
   }
 
   return (
-    <details className="mt-6">
-      <summary className="cursor-pointer font-semibold">
-        Manual gate operation
-      </summary>
+    <>
+      <h2 className="section-title">Manual gate operation</h2>
       <form
         className="mt-3 grid gap-3"
         onSubmit={(event) => {
@@ -45,9 +49,6 @@ export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
         }}
       >
         <fieldset disabled={busy} className="grid gap-3">
-          <p className="text-sm">
-            Verify the employee badge in person before continuing.
-          </p>
           <label>
             Guard ID{' '}
             <input
@@ -58,7 +59,7 @@ export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
             />
           </label>
           <label>
-            Guard passcode{' '}
+            Password{' '}
             <input
               className="mt-1 block w-full border p-2"
               name="passcode"
@@ -78,13 +79,7 @@ export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
               required
             />
           </label>
-          <label>
-            Direction{' '}
-            <select className="mt-1 block w-full border p-2" name="direction">
-              <option value="IN">Entry</option>
-              <option value="OUT">Exit</option>
-            </select>
-          </label>
+          <DirectionPicker name="direction" />
           <label>
             Reason{' '}
             <textarea
@@ -99,6 +94,6 @@ export function ManualCheckInForm({ onRecorded }: { onRecorded: () => void }) {
           </Button>
         </fieldset>
       </form>
-    </details>
+    </>
   )
 }

@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 :root {
+  --accent-background: #e8f6ef;
+  --button-foreground: #183e35;
   font-family: 'Geist', 'Segoe UI', sans-serif;
   color: #183e35;
   background: #103c32;
@@ -83,7 +85,7 @@ summary:focus-visible {
   color: #195440;
 }
 .panel {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fffc 40%, #dcf6eb 100%);
+  background: white;
   border: 1px solid #ffffffa3;
   border-radius: 20px;
   box-shadow: 0 14px 45px #031e1b26;
@@ -151,7 +153,10 @@ textarea::placeholder {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  border: 0;
   border-radius: 10px;
+  background: var(--accent-background);
+  color: var(--button-foreground);
   padding: 12px 18px;
   font-size: 14px;
   font-weight: 650;
@@ -169,12 +174,6 @@ textarea::placeholder {
 .button-primary {
   background: #206247;
   color: white;
-  border: 1px solid #206247;
-}
-.button-secondary {
-  background: #eaf3ed;
-  color: #285a44;
-  border: 1px solid #c8dbca;
 }
 .button:disabled {
   opacity: 0.48;
@@ -216,6 +215,9 @@ textarea::placeholder {
   letter-spacing: -0.6px;
   margin-bottom: 10px;
 }
+.qr-scan-heading .section-title {
+  margin-bottom: 0;
+}
 .qr-panel > p,
 .kiosk-panel > p {
   font-size: 14px;
@@ -253,6 +255,32 @@ textarea::placeholder {
 .kiosk-panel {
   padding: 28px;
 }
+.check-in-modes {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  box-shadow: inset 0 -1px #d6e3d6;
+}
+.check-in-modes button {
+  min-height: 44px;
+  padding: 0 14px;
+  cursor: pointer;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 650;
+}
+.check-in-modes button[aria-pressed='true'] {
+  color: #206247;
+  box-shadow: inset 0 -3px #206247;
+}
+.check-in-modes button:hover:not(:disabled) {
+  color: #206247;
+  background: var(--accent-background);
+}
+.check-in-modes button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
 .journal-panel {
   min-width: 0;
   padding: 28px;
@@ -261,7 +289,7 @@ textarea::placeholder {
   margin-bottom: 5px;
 }
 .journal-panel thead {
-  background: #e5eee1;
+  background: var(--accent-background);
 }
 .journal-panel td {
   vertical-align: top;

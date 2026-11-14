@@ -1,10 +1,13 @@
 import { Button } from '../components/ui/Button'
+import { RefreshCw } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { api } from '../services/api'
 
 import type { Employee, QRCodeData } from '../types/employee'
+
+const QR_REFRESH_SECONDS = 30
 
 export function EmployeeQrPage({
   employee,
@@ -18,10 +21,13 @@ export function EmployeeQrPage({
   const [error, setError] = useState('')
   const [loadFailed, setLoadFailed] = useState(false)
   const [refresh, setRefresh] = useState(0)
+  const [secondsUntilRefresh, setSecondsUntilRefresh] =
+    useState(QR_REFRESH_SECONDS)
   const [copiedToken, setCopiedToken] = useState('')
 
   useEffect(() => {
     let cancelled = false
+    let nextRefreshAt = performance.now() + QR_REFRESH_SECONDS * 1000
     async function generate() {
       try {
         const result = await api<QRCodeData>(
@@ -50,8 +56,13 @@ export function EmployeeQrPage({
     }
     void generate()
     const timer = window.setInterval(() => {
-      void generate()
-    }, 30_000)
+      const now = performance.now()
+      if (now >= nextRefreshAt) {
+        nextRefreshAt = now + QR_REFRESH_SECONDS * 1000
+        void generate()
+      }
+      setSecondsUntilRefresh(Math.ceil((nextRefreshAt - now) / 1000))
+    }, 1000)
     return () => {
       cancelled = true
       window.clearInterval(timer)
@@ -79,14 +90,12 @@ export function EmployeeQrPage({
           </p>
         </div>
         <Button variant="secondary" onClick={onSignOut}>
-          End session
+          Log out
         </Button>
       </header>
       <div className="qr-layout">
         <section className="panel qr-panel">
-          <p className="mb-4 text-slate-600">
-            Hold this code in front of the gate camera.
-          </p>
+          <p className="text-slate-600">Hold in front of kiosk camera.</p>
           <p className="min-h-lh mb-3 text-sm text-red-700">
             {error &&
               (loadFailed
@@ -105,18 +114,26 @@ export function EmployeeQrPage({
               alt="Employee check-in QR code"
             />
           )}
-          {qr && (
-            <p className="mb-4 text-slate-600">
-              Expires at: {new Date(qr.expiresAt).toLocaleTimeString('en-GB')}
-            </p>
-          )}
           {(qr || loadFailed) && (
-            <Button
-              variant="secondary"
-              onClick={() => setRefresh((value) => value + 1)}
-            >
-              {loadFailed ? 'Try again' : 'Refresh QR code'}
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-sm">
+              {qr && (
+                <p className="text-slate-600">
+                  Auto-refresh in{' '}
+                  <span className="tabular-nums">{secondsUntilRefresh}s</span>.
+                </p>
+              )}
+              <Button
+                className="gap-2"
+                variant="secondary"
+                onClick={() => {
+                  setSecondsUntilRefresh(QR_REFRESH_SECONDS)
+                  setRefresh((value) => value + 1)
+                }}
+              >
+                <RefreshCw aria-hidden="true" className="size-4 shrink-0" />
+                {loadFailed ? 'Try again' : 'Refresh now'}
+              </Button>
+            </div>
           )}
           {qr && (
             <details className="mt-5">

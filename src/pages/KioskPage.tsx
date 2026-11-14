@@ -1,18 +1,21 @@
+import { DirectionPicker } from '../components/kiosk/DirectionPicker'
 import { ManualCheckInForm } from '../components/kiosk/ManualCheckInForm'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../services/api'
 import type { GateEvent } from '../types/checkin'
 import { Button } from '../components/ui/Button'
+import { Camera } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { JournalTable } from '../components/kiosk/JournalTable'
 import { CameraScanner } from '../components/kiosk/CameraScanner'
 
 export function KioskPage() {
-  const [direction, setDirection] = useState('IN')
+  const [direction, setDirection] = useState<'IN' | 'OUT'>('IN')
+  const [mode, setMode] = useState<'qr' | 'manual'>('qr')
+  const [manualBusy, setManualBusy] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<GateEvent | null>(null)
-  const [error, setError] = useState('')
   const submitting = useRef(false)
 
   const [events, setEvents] = useState<GateEvent[]>([])
@@ -49,7 +52,7 @@ export function KioskPage() {
       submitting.current = true
       setBusy(true)
       setResult(null)
-      setError('')
+      const pendingToast = toast.loading('Verifying your QR code…')
       try {
         setResult(
           await api<GateEvent>('/checkin/api/checkins', {
@@ -59,9 +62,9 @@ export function KioskPage() {
         )
       } catch {
         const detail = 'Unable to verify your QR code. Please scan again.'
-        setError(detail)
         toast.error(detail, { toastId: detail })
       } finally {
+        toast.dismiss(pendingToast)
         await loadEvents()
         submitting.current = false
         setBusy(false)
@@ -81,7 +84,6 @@ export function KioskPage() {
 
   const onCameraError = useCallback((detail: string) => {
     setScanning(false)
-    setError(detail)
     toast.error(detail, { toastId: detail })
   }, [])
 
@@ -89,99 +91,126 @@ export function KioskPage() {
     <>
       <header className="page-heading">
         <h1>Kiosk check-in</h1>
-        <p className="mb-4 leading-relaxed text-slate-600">
+        <p className="leading-relaxed text-slate-600">
           Binh Duong · Factory 1 · Gate 1
         </p>
       </header>
       <div className="kiosk-layout">
         <section className="panel kiosk-panel">
-          <h2 className="section-title">Scan your QR code</h2>
-          <p className="mb-4 leading-relaxed text-slate-600">
-            Select Entry or Exit before scanning.
-          </p>
-          <label className="block font-semibold">
-            Direction
-            <select
-              className="mt-2 mb-4 w-full rounded-lg border border-slate-300 bg-white p-2.5 font-normal focus:border-emerald-600 focus:outline-2 focus:outline-emerald-200 disabled:bg-slate-100"
-              value={direction}
-              disabled={busy || scanning}
-              onChange={(e) => {
-                setDirection(e.target.value)
-                setResult(null)
-                setError('')
+          <div
+            className="check-in-modes"
+            role="group"
+            aria-label="Check-in mode"
+          >
+            <button
+              type="button"
+              aria-pressed={mode === 'qr'}
+              disabled={manualBusy}
+              onClick={() => setMode('qr')}
+            >
+              QR check-in
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === 'manual'}
+              disabled={busy}
+              onClick={() => {
+                setScanning(false)
+                setMode('manual')
               }}
             >
-              <option value="IN">Entry</option>
-              <option value="OUT">Exit</option>
-            </select>
-          </label>
-          <Button
-            variant="secondary"
-            disabled={busy}
-            onClick={() => {
-              setError('')
-              setResult(null)
-              setScanning((v) => !v)
-            }}
-          >
-            {scanning ? 'Stop camera' : 'Scan with camera'}
-          </Button>
-          {scanning && (
-            <CameraScanner onScan={onScan} onError={onCameraError} />
-          )}
-          <form
-            className="mt-5"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void checkIn(token)
-              setToken('')
-            }}
-          >
-            <label className="block font-semibold">
-              QR code token
-              <textarea
-                className="mt-2 mb-3 w-full rounded-lg border border-slate-300 p-2.5"
-                value={token}
-                onChange={(event) => setToken(event.target.value)}
-                rows={2}
-                disabled={busy || scanning}
-              />
-            </label>
-            <Button type="submit" disabled={busy || scanning || !token.trim()}>
-              Verify code
-            </Button>
-          </form>
-          <div className="mt-3 min-h-[1lh] text-sm">
-            {error ? (
-              <p className="text-red-700">QR check-in failed.</p>
-            ) : (
-              <p role="status">{busy ? 'Verifying your QR code…' : ''}</p>
-            )}
+              Manual
+            </button>
           </div>
-          {result && (
-            <div
-              role="status"
-              className={
-                result.status === 'OPENED'
-                  ? 'mt-5 rounded-lg bg-emerald-50 p-4 text-emerald-800'
-                  : 'mt-5 rounded-lg bg-red-50 p-4 text-red-800'
-              }
-            >
-              <strong>
-                {result.status === 'OPENED'
-                  ? direction === 'IN'
-                    ? 'Entry recorded'
-                    : 'Exit recorded'
-                  : 'Access denied'}
-              </strong>
-              <p className="mt-2 leading-relaxed">
-                {result.status === 'OPENED'
-                  ? 'You may proceed.'
-                  : 'Use a current employee QR code and try again.'}
-              </p>
-            </div>
+          {mode === 'qr' ? (
+            <>
+              <div className="qr-scan-heading mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <h2 className="section-title">Scan your QR code</h2>
+                <Button
+                  className="ml-auto shrink-0 gap-2"
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    setResult(null)
+                    setScanning((value) => !value)
+                  }}
+                >
+                  <Camera aria-hidden="true" className="size-4 shrink-0" />
+                  {scanning ? 'Stop camera' : 'Open camera'}
+                </Button>
+              </div>
+              <div className="mb-4">
+                <DirectionPicker
+                  name="scanDirection"
+                  selected={direction}
+                  disabled={busy || scanning}
+                  onChange={(value) => {
+                    setDirection(value)
+                    setResult(null)
+                  }}
+                />
+              </div>
+              {scanning && (
+                <CameraScanner onScan={onScan} onError={onCameraError} />
+              )}
+              <form
+                className="mt-5"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void checkIn(token)
+                  setToken('')
+                }}
+              >
+                <label className="block font-semibold">
+                  QR code token
+                  <textarea
+                    className="mt-2 mb-3 w-full rounded-lg border border-slate-300 p-2"
+                    value={token}
+                    onChange={(event) => setToken(event.target.value)}
+                    rows={2}
+                    disabled={busy || scanning}
+                  />
+                </label>
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={busy || scanning || !token.trim()}
+                  >
+                    Verify code
+                  </Button>
+                </div>
+              </form>
+              {result && (
+                <div
+                  role="status"
+                  className={
+                    result.status === 'OPENED'
+                      ? 'mt-5 rounded-lg bg-emerald-50 p-4 text-emerald-800'
+                      : 'mt-5 rounded-lg bg-red-50 p-4 text-red-800'
+                  }
+                >
+                  <strong>
+                    {result.status === 'OPENED'
+                      ? direction === 'IN'
+                        ? 'Entry recorded'
+                        : 'Exit recorded'
+                      : 'Access denied'}
+                  </strong>
+                  <p className="mt-2 leading-relaxed">
+                    {result.status === 'OPENED'
+                      ? 'You may proceed.'
+                      : 'Use a current employee QR code and try again.'}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <ManualCheckInForm
+              busy={manualBusy}
+              onBusyChange={setManualBusy}
+              onRecorded={() => void loadEvents()}
+            />
           )}
-          <ManualCheckInForm onRecorded={() => void loadEvents()} />
         </section>
         <JournalTable
           events={events}
